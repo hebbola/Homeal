@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Cocina</title>
+    <title>Sabor y Control - Gestión de Cocina</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -453,10 +453,15 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- JAVASCRIPT LOGIC (LOCALSTORAGE ENGINE) -->
     <script>
-        // Data Structures
-        let pantry = [
+        // LocalStorage Keys
+        const STORAGE_KEY_PANTRY = 'sabor_control_pantry_v1';
+        const STORAGE_KEY_SHOPPING = 'sabor_control_shopping_v1';
+        const STORAGE_KEY_RECIPES = 'sabor_control_recipes_v1';
+
+        // Default Data Fallbacks
+        const defaultPantry = [
             { id: '1', name: 'Huevos', category: 'Lácteos y Huevos', amount: 12, unit: 'pza', step: 1 },
             { id: '2', name: 'Leche', category: 'Lácteos y Huevos', amount: 0.5, unit: 'L', step: 0.5 },
             { id: '3', name: 'Espinacas', category: 'Verduras y Frutas', amount: 200, unit: 'g', step: 50 },
@@ -465,11 +470,11 @@
             { id: '6', name: 'Pechuga de Pollo', category: 'Carnes y Pescados', amount: 0, unit: 'kg', step: 0.5 }
         ];
 
-        let shoppingList = [
+        const defaultShopping = [
             { id: '101', name: 'Pechuga de Pollo', category: 'Carnes y Pescados', amount: 1, unit: 'kg', checked: false }
         ];
 
-        let recipes = [
+        const defaultRecipes = [
             {
                 id: '201',
                 title: 'Omelette de Espinacas',
@@ -495,6 +500,17 @@
                 instructions: '1. Cortar la pechuga de pollo en cubos y dorar en el sartén.\n2. Agregar los pimientos picados y el arroz.\n3. Verter agua/caldo y cocinar a fuego medio durante 20 minutos.'
             }
         ];
+
+        // Load / Save Helpers
+        let pantry = JSON.parse(localStorage.getItem(STORAGE_KEY_PANTRY)) || defaultPantry;
+        let shoppingList = JSON.parse(localStorage.getItem(STORAGE_KEY_SHOPPING)) || defaultShopping;
+        let recipes = JSON.parse(localStorage.getItem(STORAGE_KEY_RECIPES)) || defaultRecipes;
+
+        function persistData() {
+            localStorage.setItem(STORAGE_KEY_PANTRY, JSON.stringify(pantry));
+            localStorage.setItem(STORAGE_KEY_SHOPPING, JSON.stringify(shoppingList));
+            localStorage.setItem(STORAGE_KEY_RECIPES, JSON.stringify(recipes));
+        }
 
         // Initialization
         document.addEventListener('DOMContentLoaded', () => {
@@ -634,12 +650,14 @@
             const newAmount = Math.max(0, Math.round((item.amount + delta * stepVal) * 100) / 100);
             item.amount = newAmount;
 
+            persistData();
             renderPantry();
             renderRecipes();
         }
 
         function deletePantryItem(id) {
             pantry = pantry.filter(i => i.id !== id);
+            persistData();
             renderPantry();
             renderRecipes();
         }
@@ -696,6 +714,7 @@
                 });
             }
 
+            persistData();
             closeModal('modal-pantry');
             document.getElementById('form-pantry').reset();
             renderPantry();
@@ -770,6 +789,7 @@
             const item = shoppingList.find(i => i.id === id);
             if (item) {
                 item.checked = !item.checked;
+                persistData();
                 renderShopping();
             }
         }
@@ -795,6 +815,7 @@
             });
 
             shoppingList = shoppingList.filter(i => !i.checked);
+            persistData();
             renderShopping();
             renderPantry();
             renderRecipes();
@@ -802,6 +823,7 @@
 
         function deleteShoppingItem(id) {
             shoppingList = shoppingList.filter(i => i.id !== id);
+            persistData();
             renderShopping();
         }
 
@@ -825,6 +847,7 @@
                 checked: false
             });
 
+            persistData();
             closeModal('modal-shopping');
             document.getElementById('form-shopping').reset();
             renderShopping();
@@ -840,6 +863,7 @@
                     unit: unit || 'pza',
                     checked: false
                 });
+                persistData();
                 renderShopping();
             }
             switchTab('shopping');
@@ -862,6 +886,7 @@
                     }
                 }
             });
+            persistData();
             renderShopping();
         }
 
@@ -1008,6 +1033,7 @@
                             });
                         }
                     });
+                    persistData();
                     renderShopping();
                     closeModal('modal-recipe-view');
                     switchTab('shopping');
@@ -1118,7 +1144,6 @@
             });
 
             if (ingredients.length === 0) {
-                alert('Debes agregar al menos un ingrediente.');
                 return;
             }
 
@@ -1142,6 +1167,7 @@
                 });
             }
 
+            persistData();
             closeModal('modal-add-recipe');
             document.getElementById('form-recipe').reset();
             renderRecipes();
@@ -1149,6 +1175,7 @@
 
         function deleteRecipe(id) {
             recipes = recipes.filter(r => r.id !== id);
+            persistData();
             renderRecipes();
         }
 
@@ -1207,26 +1234,5 @@
             document.body.classList.remove('overflow-hidden');
         }
     </script>
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import {getDatabase, ref, push, onValue, remove} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBn20TqFLKOgFkKb1M7uRhRSqBsclX8GPQ",
-    authDomain: "homeal-d332c.firebaseapp.com",
-    projectId: "homeal-d332c",
-    storageBucket: "homeal-d332c.firebasestorage.app",
-    messagingSenderId: "287617289501",
-    appId: "1:287617289501:web:562f6f83cc01fdf3ed25f4"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-</script>
 </body>
 </html>
